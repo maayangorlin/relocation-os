@@ -4,7 +4,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwicQIecb2RBGSOwgVgZgjh
 
 const CATEGORIES = ["Living room","Art","Plants","Kitchen appliances","Kitchen cookware","Coffee & pantry","Bedroom","Bathroom","Tech","Books","Sports","Misc"];
 const DESTINATIONS = [
-  { id: "nomi", label: "Nomi's", color: "#E1F5EE", border: "#1D9E75", text: "#085041" },
+  { id: "apt", label: "APT", color: "#E1F5EE", border: "#1D9E75", text: "#085041" },
   { id: "ny", label: "To NY", color: "#FBEAF0", border: "#D4537E", text: "#72243E" },
   { id: "storage", label: "Storage", color: "#FAEEDA", border: "#BA7517", text: "#633806" },
   { id: "undecided", label: "Undecided", color: "var(--color-background-secondary)", border: "var(--color-border-secondary)", text: "var(--color-text-secondary)" },
@@ -14,7 +14,7 @@ const PHASES = [
     { id: "d1", text: "Walk every room — tag items NY / Store / Leave" },
     { id: "d2", text: "Go through wardrobe: NY pile vs. store pile" },
     { id: "d3", text: "Decide on art pieces — leave on walls or pack?" },
-    { id: "d4", text: "Go through kitchen — what stays for Nomi?" },
+    { id: "d4", text: "Go through kitchen — what stays for the apartment?" },
     { id: "d5", text: "Declutter bathroom — donate expired products" },
     { id: "d6", text: "Identify coffee gear going to NY vs. staying" },
     { id: "d7", text: "Sort books — decorative stays, sentimental stores" },
@@ -22,14 +22,14 @@ const PHASES = [
   { id: "supplies", label: "Phase 2 — Get supplies", dates: "Apr 28 – May 2", color: "#1D9E75", bg: "#E1F5EE", textColor: "#085041", tasks: [
     { id: "s1", text: "Buy boxes: ~10 medium, ~5 large, ~3 small" },
     { id: "s2", text: "Get packing tape, bubble wrap, marker pens, labels" },
-    { id: "s3", text: "Get color-coded stickers (NY / Storage / Nomi)" },
+    { id: "s3", text: "Get color-coded stickers (NY / Storage / APT)" },
     { id: "s4", text: "Pull out suitcases — check condition" },
   ]},
   { id: "pack_storage", label: "Phase 3 — Pack for storage", dates: "May 1–10", color: "#BA7517", bg: "#FAEEDA", textColor: "#633806", tasks: [
     { id: "p1", text: "Pack books into small/medium boxes (keep boxes light!)" },
     { id: "p2", text: "Pack sentimental items — art, framed photos, bubble wrap" },
     { id: "p3", text: "Pack off-season clothes and shoes" },
-    { id: "p4", text: "Pack bedding and linens not staying for Nomi" },
+    { id: "p4", text: "Pack bedding and linens not staying for the apartment" },
     { id: "p5", text: "Label every box: contents + 'STORAGE'" },
     { id: "p6", text: "Log every box in the Boxes tab" },
   ]},
@@ -43,7 +43,7 @@ const PHASES = [
   { id: "handover", label: "Phase 5 — Handover", dates: "May 15–19", color: "#378ADD", bg: "#E6F1FB", textColor: "#0C447C", tasks: [
     { id: "h1", text: "Move storage boxes to parents' house" },
     { id: "h2", text: "Deep clean bedroom and wardrobe area" },
-    { id: "h3", text: "Leave handover note for Nomi" },
+    { id: "h3", text: "Leave handover note for the apartment" },
     { id: "h4", text: "Label shared kitchen items clearly" },
     { id: "h5", text: "Final walkthrough — anything forgotten?" },
     { id: "h6", text: "Hand over keys" },
@@ -134,7 +134,7 @@ function InventoryTab({ items, loading, onAdd, onUpdate }) {
     return matchSearch && matchDest && matchCat;
   });
 
-  const counts = { nomi: 0, ny: 0, storage: 0, undecided: 0 };
+  const counts = { apt: 0, ny: 0, storage: 0, undecided: 0 };
   items.forEach(i => { if (counts[i.destination] !== undefined) counts[i.destination]++; else counts.undecided++; });
 
   const openAdd = () => { setForm({ name: "", category: "", destination: "undecided", box_code: "", notes: "" }); setEditId(null); setAdding(true); };
@@ -159,7 +159,7 @@ function InventoryTab({ items, loading, onAdd, onUpdate }) {
   return (
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: "1.25rem" }}>
-        {[["nomi","#085041"],["ny","#72243E"],["storage","#633806"],["undecided","var(--color-text-secondary)"]].map(([dest, color]) => (
+        {[["apt","#085041"],["ny","#72243E"],["storage","#633806"],["undecided","var(--color-text-secondary)"]].map(([dest, color]) => (
           <div key={dest} style={{ background: "var(--color-background-secondary)", borderRadius: "var(--border-radius-md)", padding: "10px 12px", textAlign: "center" }}>
             <div style={{ fontSize: 20, fontWeight: 500, color }}>{counts[dest] || 0}</div>
             <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 2 }}>{destObj(dest).label}</div>
@@ -262,7 +262,7 @@ function PlanTab({ checked, toggle }) {
         );
       })}
       <div style={{ marginBottom: "1.25rem" }}>
-        <div style={{ fontSize: 12, fontWeight: 500, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }}>Handover note for Nomi</div>
+        <div style={{ fontSize: 12, fontWeight: 500, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }}>Handover note for the apartment</div>
         <textarea value={handover} onChange={e => setHandover(e.target.value)} rows={5} style={{ width: "100%", fontSize: 13, padding: "10px 12px", borderRadius: "var(--border-radius-md)", border: "0.5px solid var(--color-border-secondary)", resize: "vertical", boxSizing: "border-box", lineHeight: 1.7, color: "var(--color-text-primary)", background: "var(--color-background-primary)", borderLeft: "3px solid #1D9E75" }} />
       </div>
     </div>
@@ -273,7 +273,7 @@ function PlanTab({ checked, toggle }) {
 const DEST_BOX = [
   { id: "storage", label: "Storage (parents)", color: "#FAEEDA", border: "#BA7517", text: "#633806" },
   { id: "ny", label: "Taking to NY", color: "#FBEAF0", border: "#D4537E", text: "#72243E" },
-  { id: "nomi", label: "Leaving for Nomi", color: "#E1F5EE", border: "#1D9E75", text: "#085041" },
+  { id: "apt", label: "Leaving for the apartment", color: "#E1F5EE", border: "#1D9E75", text: "#085041" },
 ];
 const BOX_CATS = ["Clothes","Shoes","Books","Kitchen","Bathroom","Tech","Bedding","Art & decor","Sports","Misc"];
 const SUIT_IDS = ["s1","s2","s3"];
