@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const API_URL = "https://script.google.com/macros/s/AKfycbwicQIecb2RBGSOwgVgZgjh2hHO2giXcOUsTh4C_wy4wbOG4EmGecKaYLhjZEAuWO59iw/exec";
 
@@ -112,6 +112,43 @@ function lsSet(key, val) {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
 }
 
+// ── Swipe to delete ───────────────────────────────────────────────────────────
+function SwipeRow({ onDelete, children, height = 52 }) {
+  const [offset, setOffset] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const startX = useRef(null);
+  const threshold = 72;
+
+  const onTouchStart = e => { startX.current = e.touches[0].clientX; setSwiping(true); };
+  const onTouchMove = e => {
+    if (startX.current === null) return;
+    const dx = e.touches[0].clientX - startX.current;
+    if (dx < 0) setOffset(Math.max(dx, -threshold - 20));
+  };
+  const onTouchEnd = () => {
+    if (offset < -threshold * 0.6) setOffset(-threshold);
+    else setOffset(0);
+    setSwiping(false);
+    startX.current = null;
+  };
+
+  return (
+    <div style={{ position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: threshold, background: "#DC2626", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} onClick={() => { setOffset(0); onDelete(); }}>
+        <span style={{ color: "#FFFFFF", fontSize: 12, fontWeight: 600, fontFamily: SANS, letterSpacing: "0.03em" }}>Delete</span>
+      </div>
+      <div
+        style={{ transform: `translateX(${offset}px)`, transition: swiping ? "none" : "transform .25s ease", position: "relative", zIndex: 1, background: "#FFFFFF" }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 // ── Confirm dialog ────────────────────────────────────────────────────────────
 function Confirm({ message, onConfirm, onCancel }) {
   return (
@@ -186,7 +223,7 @@ function Header({ doneTasks, totalTasks }) {
   const pct = Math.round((doneTasks / totalTasks) * 100);
   const daysLeft = Math.max(0, Math.ceil((new Date("2026-05-20") - new Date()) / 86400000));
   return (
-    <div style={{ background: T.terracotta, padding: "20px 20px 24px" }}>
+    <div style={{ background: T.terracotta, padding: "20px 20px 24px", paddingTop: "calc(20px + env(safe-area-inset-top))" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.02em", lineHeight: 1.1, fontFamily: SERIF }}>Jaffa → New York</div>
@@ -213,7 +250,7 @@ function TabBar({ tab, setTab }) {
     { id: "shopping",  label: "NY list" },
   ];
   return (
-    <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: "#FFFFFF", borderTop: "1px solid #E5DDD4", display: "flex", zIndex: 10 }}>
+    <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: "#FFFFFF", borderTop: "1px solid #E5DDD4", display: "flex", zIndex: 10, paddingBottom: "env(safe-area-inset-bottom)" }}>
       {tabs.map(t => (
         <button key={t.id} onClick={() => setTab(t.id)} style={{
           flex: 1, padding: "10px 4px 14px", border: "none", background: "transparent", cursor: "pointer",
@@ -268,18 +305,20 @@ function InventoryTab({ items, loading, loadError, onAdd, onUpdate, onDelete, on
   const handleDelete = () => setConfirmDelete(editId);
 
   const ItemRow = ({ item, idx, total }) => (
-    <div onClick={() => openEdit(item)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", borderBottom: idx < total - 1 ? "1px solid #F0EAE2" : "none", cursor: "pointer" }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, color: T.ink, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: SANS }}>{item.name}</div>
-        {(isSearching || item.notes) && <div style={{ fontSize: 11, color: T.inkFaint, marginTop: 2, fontFamily: SANS }}>{isSearching ? item.category : ""}{isSearching && item.notes ? " · " : ""}{item.notes || ""}</div>}
+    <SwipeRow onDelete={() => setConfirmDelete(item.id)}>
+      <div onClick={() => openEdit(item)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", borderBottom: idx < total - 1 ? "1px solid #F0EAE2" : "none", cursor: "pointer" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, color: T.ink, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: SANS }}>{item.name}</div>
+          {(isSearching || item.notes) && <div style={{ fontSize: 11, color: T.inkFaint, marginTop: 2, fontFamily: SANS }}>{isSearching ? item.category : ""}{isSearching && item.notes ? " · " : ""}{item.notes || ""}</div>}
+        </div>
+        <div style={{ display: "flex", gap: 5, flexShrink: 0, alignItems: "center" }}>
+          {item.destination === "storage" && item.box_code && (
+            <span style={S.pill("#F5EDD6", "#B07D2A", "#DCC07A")}>{item.box_code}</span>
+          )}
+          <DestPill dest={item.destination} />
+        </div>
       </div>
-      <div style={{ display: "flex", gap: 5, flexShrink: 0, alignItems: "center" }}>
-        {item.destination === "storage" && item.box_code && (
-          <span style={S.pill("#F5EDD6", "#B07D2A", "#DCC07A")}>{item.box_code}</span>
-        )}
-        <DestPill dest={item.destination} />
-      </div>
-    </div>
+    </SwipeRow>
   );
 
   const handleStatClick = destId => {
@@ -710,9 +749,9 @@ export default function App() {
   const doneTasks = Object.values(checked).filter(Boolean).length;
 
   return (
-    <div style={{ fontFamily: SERIF, maxWidth: 480, margin: "0 auto", background: "#FAF8F4", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ fontFamily: SERIF, maxWidth: 480, margin: "0 auto", background: "#FAF8F4", minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
       <Header doneTasks={doneTasks} totalTasks={totalTasks} />
-      <div style={{ flex: 1, overflowY: "auto", paddingBottom: 80 }}>
+      <div style={{ flex: 1, overflowY: "auto", paddingBottom: "calc(80px + env(safe-area-inset-bottom))" }}>
         {tab === "inventory" && <InventoryTab items={items} loading={loading} loadError={loadError} onAdd={addItem} onUpdate={updateItem} onDelete={deleteItem} onRetry={fetchItems} />}
         {tab === "plan" && <PlanTab checked={checked} toggle={toggle} />}
         {tab === "boxes" && <BoxesTab />}
